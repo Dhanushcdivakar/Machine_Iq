@@ -12,8 +12,8 @@ const OpenWorkloads = () => {
     const fetchData = async () => {
       try {
         const [jobsRes, completedRes] = await Promise.all([
-          axios.get('http://localhost:5001/api/jobcards'),
-          axios.get('http://localhost:5001/api/jobs/completed')
+          axios.get('https://machine-iq-backend.vercel.app/api/jobcards'),
+          axios.get('https://machine-iq-backend.vercel.app/api/jobs/completed')
         ]);
         setJobs(jobsRes.data);
         setCompleted(completedRes.data);
@@ -32,7 +32,7 @@ const OpenWorkloads = () => {
   const startJob = async (job) => {
     try {
       setStatusMessage(`INITIATING JOB ${job.jobId}...`);
-      await axios.post('http://localhost:5001/api/jobs/start', job);
+      await axios.post('https://machine-iq-backend.vercel.app/api/jobs/start', job);
       setCurrentJobId(job.jobId);
       setStatusMessage(`JOB ${job.jobId} ACTIVE | MACHINE: ${job.machineName}`);
     } catch (error) {
@@ -44,9 +44,9 @@ const OpenWorkloads = () => {
   const stopJob = async (jobId) => {
     try {
       setStatusMessage(`TERMINATING JOB ${jobId}...`);
-      await axios.post('http://localhost:5001/api/jobs/stop', { jobId });
+      await axios.post('https://machine-iq-backend.vercel.app/api/jobs/stop', { jobId });
       setCurrentJobId(null);
-      const completedRes = await axios.get('http://localhost:5001/api/jobs/completed');
+      const completedRes = await axios.get('https://machine-iq-backend.vercel.app/api/jobs/completed');
       setCompleted(completedRes.data);
       setStatusMessage(`JOB ${jobId} ARCHIVED`);
     } catch (error) {
