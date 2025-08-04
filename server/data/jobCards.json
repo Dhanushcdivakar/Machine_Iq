@@ -1,0 +1,12 @@
+[
+  { "jobId": "F001", "partName": "Table Top", "machineName": "CNC Router" },
+  { "jobId": "F002", "partName": "Chair Leg", "machineName": "Lathe Machine" },
+  { "jobId": "F003", "partName": "Drawer Panel", "machineName": "Panel Saw" },
+  { "jobId": "F004", "partName": "Wardrobe Door", "machineName": "Edge Banding" },
+  { "jobId": "F005", "partName": "Coffee Table", "machineName": "Sanding Machine" },
+  { "jobId": "F006", "partName": "Dining Chair", "machineName": "Assembling Unit" },
+  { "jobId": "F007", "partName": "Bookshelf", "machineName": "Drill Station" },
+  { "jobId": "F008", "partName": "TV Stand", "machineName": "Paint Booth" },
+  { "jobId": "F009", "partName": "Bed Frame", "machineName": "Welding Station" },
+  { "jobId": "F010", "partName": "Kitchen Cabinet", "machineName": "Router Machine" }
+]
