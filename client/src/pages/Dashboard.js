@@ -15,8 +15,8 @@ const Dashboard = () => {
     const fetchData = async () => {
       try {
         const [completedRes, allJobsRes] = await Promise.all([
-          axios.get('http://localhost:5001/api/jobs/completed'),
-          axios.get('http://localhost:5001/api/jobcards')
+          axios.get('https://machine-iq-backend.vercel.app/api/jobs/completed'),
+          axios.get('https://machine-iq-backend.vercel.app/api/jobcards')
         ]);
         setCompleted(completedRes.data);
         setAllJobs(allJobsRes.data);
