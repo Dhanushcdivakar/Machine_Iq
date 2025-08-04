@@ -13,47 +13,43 @@
       --bg-dark: #0f0f0f;
     }
     
-    /* Base styles - allows horizontal scrolling ONLY when absolutely needed */
-    html, body {
+    /* Base styles - allows horizontal scrolling with infinite dark bg */
+    html {
+      background-color: var(--bg-dark);
+      overflow-x: auto; /* Allows horizontal scrolling */
+      width: 100%;
+    }
+    
+    body {
       background-color: var(--bg-dark);
       color: #e0e0e0;
       font-family: 'Courier New', monospace;
       min-height: 100vh;
-      width: 100%;
+      min-width: 100vw; /* Ensures body is at least viewport width */
       margin: 0;
       padding: 0;
+      position: relative;
+      /* Creates infinite dark background */
+      box-shadow: 0 0 0 100vmax var(--bg-dark);
+      clip-path: inset(0 -100vmax);
     }
     
+    /* Main app container */
     #root {
-      width: 100%;
-      overflow-x: auto; /* Allows scrolling if absolutely needed */
+      min-width: 100vw;
+      position: relative;
+      z-index: 1;
     }
     
-    /* Containers that prevent overflow */
+    /* Containers */
     .container, .container-fluid {
       width: 100%;
       max-width: 100%;
       padding-right: 15px;
       padding-left: 15px;
-      overflow-x: hidden; /* Hides overflow at container level */
     }
     
-    /* Responsive content rules */
-    .responsive-content {
-      width: 100%;
-      max-width: 100%;
-      overflow-x: auto; /* Allows scrolling for wide content */
-    }
-    
-    /* Special handling for tables and charts */
-    table, .chart-container {
-      min-width: 100%;
-      width: auto;
-      overflow-x: auto;
-      display: block;
-    }
-    
-    /* Glassmorphism with safe margins */
+    /* Glassmorphism */
     .glass {
       background: rgba(15, 15, 30, 0.7);
       border-radius: 10px;
@@ -62,7 +58,11 @@
       padding: 1rem;
       margin: 0.5rem;
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      max-width: calc(100% - 1rem);
+    }
+    
+    /* Force all elements to properly contain their children */
+    * {
+      box-sizing: border-box;
     }
   </style>
 </head>
