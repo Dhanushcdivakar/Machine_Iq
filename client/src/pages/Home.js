@@ -10,8 +10,8 @@ const Home = () => {
     const fetchData = async () => {
       try {
         const [completedRes, jobsRes] = await Promise.all([
-          axios.get('http://localhost:5001/api/jobs/completed'),
-          axios.get('http://localhost:5001/api/jobcards')
+          axios.get('https://machine-iq-backend.vercel.app/api/jobs/completed'),
+          axios.get('https://machine-iq-backend.vercel.app/api/jobcards')
         ]);
         setCompleted(completedRes.data);
         setJobs(jobsRes.data);
