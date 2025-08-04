@@ -9,7 +9,7 @@ const ClosedWorkloads = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get('http://localhost:5001/api/jobs/completed');
+        const response = await axios.get('https://machine-iq-backend.vercel.app/api/jobs/completed');
         setCompletedJobs(response.data);
       } catch (error) {
         console.error("Error fetching completed jobs:", error);
