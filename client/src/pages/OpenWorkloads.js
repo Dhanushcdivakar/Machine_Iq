@@ -8,25 +8,28 @@ const OpenWorkloads = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [statusMessage, setStatusMessage] = useState('');
 
+  // Fetch all job data and check for active job
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [jobsRes, completedRes, activeRes] = await Promise.all([
+        setIsLoading(true);
+        const [jobsRes, completedRes] = await Promise.all([
           axios.get('https://machine-iq-backend.vercel.app/api/jobcards'),
-          axios.get('https://machine-iq-backend.vercel.app/api/jobs/completed'),
-          axios.get('https://machine-iq-backend.vercel.app/api/jobs/active')
+          axios.get('https://machine-iq-backend.vercel.app/api/jobs/completed')
         ]);
 
         setJobs(jobsRes.data);
         setCompleted(completedRes.data);
 
+        // Check for active job
+        const activeRes = await axios.get('https://machine-iq-backend.vercel.app/api/jobs/active');
         if (activeRes.data) {
           setCurrentJobId(activeRes.data.jobId);
-          setStatusMessage(`RESUMED ACTIVE JOB ${activeRes.data.jobId}`);
+          setStatusMessage(`ACTIVE JOB: ${activeRes.data.jobId} | MACHINE: ${activeRes.data.machineName}`);
         }
       } catch (error) {
         console.error("Error fetching data:", error);
-        setStatusMessage('DATABASE CONNECTION FAILED');
+        setStatusMessage('SYSTEM ERROR: FAILED TO LOAD DATA');
       } finally {
         setIsLoading(false);
       }
@@ -35,14 +38,15 @@ const OpenWorkloads = () => {
   }, []);
 
   const isCompleted = (jobId) => completed.some(c => c.jobId === jobId);
-  const isActive = (jobId) => currentJobId === jobId;
 
   const startJob = async (job) => {
     try {
-      setStatusMessage(`INITIATING JOB ${job.jobId}...`);
-      await axios.post('https://machine-iq-backend.vercel.app/api/jobs/start', job);
-      setCurrentJobId(job.jobId);
-      setStatusMessage(`JOB ${job.jobId} ACTIVE | MACHINE: ${job.machineName}`);
+      setStatusMessage(`INITIALIZING JOB ${job.jobId}...`);
+      const response = await axios.post('https://machine-iq-backend.vercel.app/api/jobs/start', job);
+      if (response.data.success) {
+        setCurrentJobId(job.jobId);
+        setStatusMessage(`JOB ACTIVE: ${job.jobId} | MACHINE: ${job.machineName}`);
+      }
     } catch (error) {
       setStatusMessage('ACTIVATION FAILED: SYSTEM ERROR');
       console.error("Error starting job:", error);
@@ -52,11 +56,13 @@ const OpenWorkloads = () => {
   const stopJob = async (jobId) => {
     try {
       setStatusMessage(`TERMINATING JOB ${jobId}...`);
-      await axios.post('https://machine-iq-backend.vercel.app/api/jobs/stop', { jobId });
-      setCurrentJobId(null);
-      const completedRes = await axios.get('https://machine-iq-backend.vercel.app/api/jobs/completed');
-      setCompleted(completedRes.data);
-      setStatusMessage(`JOB ${jobId} ARCHIVED`);
+      const response = await axios.post('https://machine-iq-backend.vercel.app/api/jobs/stop', { jobId });
+      if (response.data.success) {
+        setCurrentJobId(null);
+        const completedRes = await axios.get('https://machine-iq-backend.vercel.app/api/jobs/completed');
+        setCompleted(completedRes.data);
+        setStatusMessage(`JOB ${jobId} TERMINATED AND ARCHIVED`);
+      }
     } catch (error) {
       setStatusMessage('TERMINATION FAILED: SYSTEM ERROR');
       console.error("Error stopping job:", error);
@@ -83,17 +89,21 @@ const OpenWorkloads = () => {
           <div className="spinner-border text-warning" role="status">
             <span className="visually-hidden">Loading...</span>
           </div>
-          <p style={{ color: '#ff0', marginTop: '10px' }}>ACCESSING JOB DATABASE...</p>
+          <p style={{ color: '#ff0', marginTop: '10px' }}>LOADING JOB DATABASE...</p>
         </div>
       ) : (
         <div style={styles.jobsGrid}>
           {activeJobs.map((job, index) => (
-            <div key={index} style={styles.jobCard}>
+            <div key={index} style={{
+              ...styles.jobCard,
+              borderColor: currentJobId === job.jobId ? '#0f0' : 'rgba(255, 255, 0, 0.3)',
+              boxShadow: currentJobId === job.jobId ? '0 0 20px rgba(0, 255, 0, 0.5)' : '0 0 15px rgba(255, 255, 0, 0.1)'
+            }}>
               <div style={styles.cardHeader}>
                 <h3 style={styles.jobTitle}>{job.partName}</h3>
                 <div style={styles.jobId}>JOB_ID: <span style={{ color: '#0ff' }}>{job.jobId}</span></div>
               </div>
-
+              
               <div style={styles.cardBody}>
                 <div style={styles.infoRow}>
                   <span style={styles.infoLabel}>MACHINE:</span>
@@ -101,39 +111,38 @@ const OpenWorkloads = () => {
                 </div>
                 <div style={styles.infoRow}>
                   <span style={styles.infoLabel}>STATUS:</span>
-                  <span style={{
-                    color: isActive(job.jobId) ? '#0f0' : '#ff0',
-                    textShadow: isActive(job.jobId) ? '0 0 5px #0f0' : 'none'
+                  <span style={{ 
+                    color: currentJobId === job.jobId ? '#0f0' : '#ff0',
+                    textShadow: currentJobId === job.jobId ? '0 0 5px #0f0' : 'none'
                   }}>
-                    {isActive(job.jobId) ? 'ACTIVE' : 'STANDBY'}
+                    {currentJobId === job.jobId ? 'ACTIVE' : 'STANDBY'}
                   </span>
                 </div>
               </div>
 
               <div style={styles.cardFooter}>
-                {isActive(job.jobId) ? (
-                  <button
+                {currentJobId === job.jobId ? (
+                  <button 
                     style={{ ...styles.button, ...styles.stopButton }}
                     onClick={() => stopJob(job.jobId)}
                   >
                     TERMINATE PROCESS
                   </button>
                 ) : currentJobId ? (
-                  <button
-                    style={{
-                      ...styles.button,
-                      opacity: 0.4,
-                      cursor: 'not-allowed',
-                      backgroundColor: '#333',
-                      color: '#999',
-                      border: '1px solid #999'
+                  <button 
+                    style={{ 
+                      ...styles.button, 
+                      background: 'rgba(50, 50, 50, 0.5)',
+                      color: '#666',
+                      border: '1px solid #666',
+                      cursor: 'not-allowed'
                     }}
                     disabled
                   >
-                    JOB LOCKED
+                    SYSTEM OCCUPIED
                   </button>
                 ) : (
-                  <button
+                  <button 
                     style={{ ...styles.button, ...styles.startButton }}
                     onClick={() => startJob(job)}
                   >
@@ -148,7 +157,6 @@ const OpenWorkloads = () => {
     </div>
   );
 };
-
 
 // Cyberpunk styling
 const styles = {
