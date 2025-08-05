@@ -8,27 +8,18 @@ const OpenWorkloads = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [statusMessage, setStatusMessage] = useState('');
 
-  // Fetch data and check for active job
   useEffect(() => {
     const fetchData = async () => {
       try {
-        setIsLoading(true);
-        const [jobsRes, completedRes, activeRes] = await Promise.all([
+        const [jobsRes, completedRes] = await Promise.all([
           axios.get('https://machine-iq-backend.vercel.app/api/jobcards'),
-          axios.get('https://machine-iq-backend.vercel.app/api/jobs/completed'),
-          axios.get('https://machine-iq-backend.vercel.app/api/jobs/active')
+          axios.get('https://machine-iq-backend.vercel.app/api/jobs/completed')
         ]);
-
         setJobs(jobsRes.data);
         setCompleted(completedRes.data);
-        
-        if (activeRes.data) {
-          setCurrentJobId(activeRes.data.jobId);
-          setStatusMessage(`ACTIVE JOB: ${activeRes.data.jobId} | MACHINE: ${activeRes.data.machineName}`);
-        }
       } catch (error) {
-        console.error("Error:", error);
-        setStatusMessage('SYSTEM ERROR: FAILED TO LOAD DATA');
+        console.error("Error fetching data:", error);
+        setStatusMessage('DATABASE CONNECTION FAILED');
       } finally {
         setIsLoading(false);
       }
@@ -40,31 +31,27 @@ const OpenWorkloads = () => {
 
   const startJob = async (job) => {
     try {
-      setStatusMessage(`INITIALIZING JOB ${job.jobId}...`);
-      const response = await axios.post('https://machine-iq-backend.vercel.app/api/jobs/start', job);
-      if (response.data.success) {
-        setCurrentJobId(job.jobId);
-        setStatusMessage(`JOB ACTIVE: ${job.jobId} | MACHINE: ${job.machineName}`);
-      }
+      setStatusMessage(`INITIATING JOB ${job.jobId}...`);
+      await axios.post('https://machine-iq-backend.vercel.app/api/jobs/start', job);
+      setCurrentJobId(job.jobId);
+      setStatusMessage(`JOB ${job.jobId} ACTIVE | MACHINE: ${job.machineName}`);
     } catch (error) {
-      setStatusMessage('ACTIVATION FAILED');
-      console.error("Error:", error);
+      setStatusMessage('ACTIVATION FAILED: SYSTEM ERROR');
+      console.error("Error starting job:", error);
     }
   };
 
   const stopJob = async (jobId) => {
     try {
       setStatusMessage(`TERMINATING JOB ${jobId}...`);
-      const response = await axios.post('https://machine-iq-backend.vercel.app/api/jobs/stop', { jobId });
-      if (response.data.success) {
-        setCurrentJobId(null);
-        const completedRes = await axios.get('https://machine-iq-backend.vercel.app/api/jobs/completed');
-        setCompleted(completedRes.data);
-        setStatusMessage(`JOB ${jobId} TERMINATED`);
-      }
+      await axios.post('https://machine-iq-backend.vercel.app/api/jobs/stop', { jobId });
+      setCurrentJobId(null);
+      const completedRes = await axios.get('https://machine-iq-backend.vercel.app/api/jobs/completed');
+      setCompleted(completedRes.data);
+      setStatusMessage(`JOB ${jobId} ARCHIVED`);
     } catch (error) {
-      setStatusMessage('TERMINATION FAILED');
-      console.error("Error:", error);
+      setStatusMessage('TERMINATION FAILED: SYSTEM ERROR');
+      console.error("Error stopping job:", error);
     }
   };
 
@@ -88,16 +75,12 @@ const OpenWorkloads = () => {
           <div className="spinner-border text-warning" role="status">
             <span className="visually-hidden">Loading...</span>
           </div>
-          <p style={{ color: '#ff0', marginTop: '10px' }}>LOADING SYSTEM DATA...</p>
+          <p style={{ color: '#ff0', marginTop: '10px' }}>ACCESSING JOB DATABASE...</p>
         </div>
       ) : (
         <div style={styles.jobsGrid}>
-          {activeJobs.map((job) => (
-            <div key={job.jobId} style={{
-              ...styles.jobCard,
-              borderColor: currentJobId === job.jobId ? '#0f0' : 'rgba(255, 255, 0, 0.3)',
-              boxShadow: currentJobId === job.jobId ? '0 0 20px rgba(0, 255, 0, 0.5)' : '0 0 15px rgba(255, 255, 0, 0.1)'
-            }}>
+          {activeJobs.map((job, index) => (
+            <div key={index} style={styles.jobCard}>
               <div style={styles.cardHeader}>
                 <h3 style={styles.jobTitle}>{job.partName}</h3>
                 <div style={styles.jobId}>JOB_ID: <span style={{ color: '#0ff' }}>{job.jobId}</span></div>
@@ -129,15 +112,10 @@ const OpenWorkloads = () => {
                   </button>
                 ) : (
                   <button 
-                    style={{ 
-                      ...styles.button, 
-                      ...styles.startButton,
-                      ...(currentJobId ? styles.disabledButton : {})
-                    }}
-                    onClick={() => !currentJobId && startJob(job)}
-                    disabled={!!currentJobId}
+                    style={{ ...styles.button, ...styles.startButton }}
+                    onClick={() => startJob(job)}
                   >
-                    {currentJobId ? 'SYSTEM OCCUPIED' : 'INITIATE PROCESS'}
+                    INITIATE PROCESS
                   </button>
                 )}
               </div>
