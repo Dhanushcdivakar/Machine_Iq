@@ -28,3 +28,17 @@ exports.getCompletedJobs = async (req, res) => {
   const jobs = await Job.find({ endTime: { $ne: null } });
   res.json(jobs);
 };
+
+exports.getActiveJob = async (req, res) => {
+  try {
+    const activeJob = await Job.findOne({ endTime: null });
+    if (!activeJob) {
+      return res.json(null); // No active job
+    }
+    res.json(activeJob); // Return active job
+  } catch (error) {
+    console.error("Error fetching active job:", error);
+    res.status(500).json({ message: "Failed to fetch active job" });
+  }
+};
+
