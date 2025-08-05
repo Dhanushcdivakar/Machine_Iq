@@ -9,9 +9,9 @@ const OpenWorkloads = () => {
   const [completed, setCompleted] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [statusMessage, setStatusMessage] = useState('');
+  const [activeJobDetails, setActiveJobDetails] = useState(null); // New state to hold details of the active job
 
   // The main effect to fetch data from the backend on component mount.
-  // This now includes a call to get the active job to ensure persistence.
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -28,13 +28,15 @@ const OpenWorkloads = () => {
 
         // Check if an active job was returned from the backend.
         const activeJob = activeJobRes.data;
-        if (activeJob) {
+        if (activeJob && Object.keys(activeJob).length > 0) {
           // If a job is active, set the state to reflect it.
           setCurrentJobId(activeJob.jobId);
+          setActiveJobDetails(activeJob); // Set the full job details
           setStatusMessage(`JOB ${activeJob.jobId} ACTIVE | MACHINE: ${activeJob.machineName}`);
         } else {
           // If no job is active, reset the state and show a default message.
           setCurrentJobId(null);
+          setActiveJobDetails(null);
           setStatusMessage('SYSTEM READY: AWAITING JOB INITIATION');
         }
       } catch (error) {
@@ -56,8 +58,9 @@ const OpenWorkloads = () => {
     try {
       setStatusMessage(`INITIATING JOB ${job.jobId}...`);
       await axios.post('https://machine-iq-backend.vercel.app/api/jobs/start', job);
-      // Update the currentJobId state to the newly started job's ID.
+      // Update the currentJobId and activeJobDetails state to the newly started job.
       setCurrentJobId(job.jobId);
+      setActiveJobDetails(job);
       setStatusMessage(`JOB ${job.jobId} ACTIVE | MACHINE: ${job.machineName}`);
     } catch (error) {
       setStatusMessage('ACTIVATION FAILED: SYSTEM ERROR');
@@ -70,8 +73,9 @@ const OpenWorkloads = () => {
     try {
       setStatusMessage(`TERMINATING JOB ${jobId}...`);
       await axios.post('https://machine-iq-backend.vercel.app/api/jobs/stop', { jobId });
-      // Clear the currentJobId state, as no job is now active.
+      // Clear the currentJobId and activeJobDetails state, as no job is now active.
       setCurrentJobId(null);
+      setActiveJobDetails(null);
       // Re-fetch the list of completed jobs to update the UI.
       const completedRes = await axios.get('https://machine-iq-backend.vercel.app/api/jobs/completed');
       setCompleted(completedRes.data);
@@ -83,7 +87,9 @@ const OpenWorkloads = () => {
   };
 
   // Filter the jobs to only show those that haven't been completed.
-  const activeJobs = jobs.filter(job => !isCompleted(job.jobId));
+  const availableJobs = jobs.filter(job => !isCompleted(job.jobId));
+  // Filter out the active job from the available jobs list so it's not duplicated.
+  const jobsToDisplay = availableJobs.filter(job => job.jobId !== currentJobId);
 
   return (
     <div style={styles.container}>
@@ -107,7 +113,38 @@ const OpenWorkloads = () => {
         </div>
       ) : (
         <div style={styles.jobsGrid}>
-          {activeJobs.map((job, index) => (
+          {/* Render the active job card separately if it exists */}
+          {activeJobDetails && (
+            <div style={styles.jobCard}>
+              <div style={styles.cardHeader}>
+                <h3 style={styles.jobTitle}>{activeJobDetails.partName}</h3>
+                <div style={styles.jobId}>JOB_ID: <span style={{ color: '#0ff' }}>{activeJobDetails.jobId}</span></div>
+              </div>
+              
+              <div style={styles.cardBody}>
+                <div style={styles.infoRow}>
+                  <span style={styles.infoLabel}>MACHINE:</span>
+                  <span style={{ color: '#f0f' }}>{activeJobDetails.machineName}</span>
+                </div>
+                <div style={styles.infoRow}>
+                  <span style={styles.infoLabel}>STATUS:</span>
+                  <span style={{ color: '#0f0', textShadow: '0 0 5px #0f0' }}>ACTIVE</span>
+                </div>
+              </div>
+
+              <div style={styles.cardFooter}>
+                <button 
+                  style={{ ...styles.button, ...styles.stopButton }}
+                  onClick={() => stopJob(activeJobDetails.jobId)}
+                >
+                  TERMINATE PROCESS
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Render the rest of the available job cards */}
+          {jobsToDisplay.map((job, index) => (
             <div key={index} style={styles.jobCard}>
               <div style={styles.cardHeader}>
                 <h3 style={styles.jobTitle}>{job.partName}</h3>
@@ -121,34 +158,18 @@ const OpenWorkloads = () => {
                 </div>
                 <div style={styles.infoRow}>
                   <span style={styles.infoLabel}>STATUS:</span>
-                  <span style={{ 
-                    color: currentJobId === job.jobId ? '#0f0' : '#ff0',
-                    textShadow: currentJobId === job.jobId ? '0 0 5px #0f0' : 'none'
-                  }}>
-                    {currentJobId === job.jobId ? 'ACTIVE' : 'STANDBY'}
-                  </span>
+                  <span style={{ color: '#ff0' }}>STANDBY</span>
                 </div>
               </div>
 
               <div style={styles.cardFooter}>
-                {/* Conditionally render the button based on whether this is the active job */}
-                {currentJobId === job.jobId ? (
-                  <button 
-                    style={{ ...styles.button, ...styles.stopButton }}
-                    onClick={() => stopJob(job.jobId)}
-                  >
-                    TERMINATE PROCESS
-                  </button>
-                ) : (
-                  <button 
-                    style={{ ...styles.button, ...styles.startButton }}
-                    onClick={() => startJob(job)}
-                    // This is the key change: disable the button if any job is active.
-                    disabled={currentJobId !== null} 
-                  >
-                    INITIATE PROCESS
-                  </button>
-                )}
+                <button 
+                  style={{ ...styles.button, ...styles.startButton }}
+                  onClick={() => startJob(job)}
+                  disabled={currentJobId !== null} // Disable if any job is active
+                >
+                  INITIATE PROCESS
+                </button>
               </div>
             </div>
           ))}
