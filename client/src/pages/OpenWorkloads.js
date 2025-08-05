@@ -148,3 +148,144 @@ const OpenWorkloads = () => {
     </div>
   );
 };
+
+
+// Cyberpunk styling
+const styles = {
+  container: {
+    background: 'linear-gradient(135deg, #111 0%, #1a1a2e 100%)',
+    minHeight: '100vh',
+    padding: '2rem',
+    color: '#fff',
+    fontFamily: '"Courier New", monospace',
+  },
+  header: {
+    fontSize: '2.5rem',
+    fontWeight: 'bold',
+    textShadow: '0 0 10px #ff0',
+    marginBottom: '1.5rem',
+    letterSpacing: '2px',
+  },
+  statusBar: {
+    background: 'rgba(20, 20, 40, 0.8)',
+    border: '1px solid rgba(255, 255, 0, 0.3)',
+    borderRadius: '4px',
+    padding: '0.8rem',
+    marginBottom: '2rem',
+    display: 'flex',
+    alignItems: 'center',
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  statusText: {
+    color: '#ff0',
+    fontWeight: 'bold',
+    zIndex: 1,
+  },
+  statusPulse: {
+    position: 'absolute',
+    right: '10px',
+    width: '10px',
+    height: '10px',
+    borderRadius: '50%',
+    background: '#ff0',
+    boxShadow: '0 0 10px #ff0',
+    animation: 'pulse 1.5s infinite',
+  },
+  jobsGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+    gap: '1.5rem',
+  },
+  jobCard: {
+    background: 'rgba(30, 30, 60, 0.6)',
+    backdropFilter: 'blur(10px)',
+    borderRadius: '8px',
+    border: '1px solid rgba(255, 255, 0, 0.3)',
+    boxShadow: '0 0 15px rgba(255, 255, 0, 0.1)',
+    transition: 'all 0.3s ease',
+    overflow: 'hidden',
+    ':hover': {
+      boxShadow: '0 0 25px rgba(255, 255, 0, 0.3)',
+      transform: 'translateY(-5px)',
+    }
+  },
+  cardHeader: {
+    padding: '1.2rem',
+    borderBottom: '1px solid rgba(255, 255, 0, 0.2)',
+  },
+  jobTitle: {
+    color: '#ff0',
+    fontSize: '1.4rem',
+    margin: '0 0 0.5rem 0',
+  },
+  jobId: {
+    color: '#aaa',
+    fontSize: '0.8rem',
+  },
+  cardBody: {
+    padding: '1.2rem',
+  },
+  infoRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    marginBottom: '0.8rem',
+    fontSize: '0.9rem',
+  },
+  infoLabel: {
+    color: '#aaa',
+    fontWeight: 'bold',
+  },
+  cardFooter: {
+    padding: '1rem',
+    background: 'rgba(0, 0, 0, 0.3)',
+    textAlign: 'center',
+  },
+  button: {
+    border: 'none',
+    padding: '0.8rem 1.5rem',
+    borderRadius: '4px',
+    fontWeight: 'bold',
+    cursor: 'pointer',
+    width: '100%',
+    transition: 'all 0.3s',
+    textTransform: 'uppercase',
+    letterSpacing: '1px',
+  },
+  startButton: {
+    background: 'rgba(0, 255, 0, 0.1)',
+    color: '#0f0',
+    border: '1px solid #0f0',
+    ':hover': {
+      background: 'rgba(0, 255, 0, 0.3)',
+      boxShadow: '0 0 15px #0f0',
+    }
+  },
+  stopButton: {
+    background: 'rgba(255, 0, 0, 0.1)',
+    color: '#f00',
+    border: '1px solid #f00',
+    ':hover': {
+      background: 'rgba(255, 0, 0, 0.3)',
+      boxShadow: '0 0 15px #f00',
+    }
+  },
+  loading: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: '200px',
+  }
+};
+
+// Add to your global CSS
+const globalStyles = `
+  @keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.3; }
+    100% { opacity: 1; }
+  }
+`;
+
+export default OpenWorkloads;
