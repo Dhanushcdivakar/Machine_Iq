@@ -4,7 +4,8 @@ const {
   getJobCards,
   startJob,
   stopJob,
-  getCompletedJobs
+  getCompletedJobs,
+  getActiveJob 
 } = require('../controllers/jobController');
 
 router.get('/jobcards', getJobCards);
