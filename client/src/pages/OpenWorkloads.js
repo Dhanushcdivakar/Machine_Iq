@@ -11,12 +11,20 @@ const OpenWorkloads = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [jobsRes, completedRes] = await Promise.all([
+        const [jobsRes, completedRes, activeJobRes] = await Promise.all([
           axios.get('https://machine-iq-backend.vercel.app/api/jobcards'),
-          axios.get('https://machine-iq-backend.vercel.app/api/jobs/completed')
+          axios.get('https://machine-iq-backend.vercel.app/api/jobs/completed'),
+          axios.get('https://machine-iq-backend.vercel.app/api/jobs/active')
         ]);
         setJobs(jobsRes.data);
         setCompleted(completedRes.data);
+        const activeJob = activeJobRes.data;
+        if (activeJob) {
+          setCurrentJobId(activeJob.jobId);
+          setStatusMessage(`JOB ${activeJob.jobId} ACTIVE | MACHINE: ${activeJob.machineName}`);
+        } else {
+          setStatusMessage('SYSTEM READY: AWAITING JOB INITIATION');
+        }
       } catch (error) {
         console.error("Error fetching data:", error);
         setStatusMessage('DATABASE CONNECTION FAILED');
@@ -114,6 +122,7 @@ const OpenWorkloads = () => {
                   <button 
                     style={{ ...styles.button, ...styles.startButton }}
                     onClick={() => startJob(job)}
+                    disabled={currentJobId !== null} // Disable other start buttons
                   >
                     INITIATE PROCESS
                   </button>
