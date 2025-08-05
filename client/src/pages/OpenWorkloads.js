@@ -2,45 +2,61 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
 const OpenWorkloads = () => {
+  // State for the list of available jobs, the currently active job's ID,
+  // the list of completed jobs, and UI feedback.
   const [jobs, setJobs] = useState([]);
   const [currentJobId, setCurrentJobId] = useState(null);
   const [completed, setCompleted] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [statusMessage, setStatusMessage] = useState('');
 
+  // The main effect to fetch data from the backend on component mount.
+  // This now includes a call to get the active job to ensure persistence.
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // Use Promise.all to make all API calls concurrently for efficiency.
         const [jobsRes, completedRes, activeJobRes] = await Promise.all([
           axios.get('https://machine-iq-backend.vercel.app/api/jobcards'),
           axios.get('https://machine-iq-backend.vercel.app/api/jobs/completed'),
           axios.get('https://machine-iq-backend.vercel.app/api/jobs/active')
         ]);
+        
+        // Update state with fetched data.
         setJobs(jobsRes.data);
         setCompleted(completedRes.data);
+
+        // Check if an active job was returned from the backend.
         const activeJob = activeJobRes.data;
         if (activeJob) {
+          // If a job is active, set the state to reflect it.
           setCurrentJobId(activeJob.jobId);
           setStatusMessage(`JOB ${activeJob.jobId} ACTIVE | MACHINE: ${activeJob.machineName}`);
         } else {
+          // If no job is active, reset the state and show a default message.
+          setCurrentJobId(null);
           setStatusMessage('SYSTEM READY: AWAITING JOB INITIATION');
         }
       } catch (error) {
         console.error("Error fetching data:", error);
         setStatusMessage('DATABASE CONNECTION FAILED');
       } finally {
+        // Set loading to false once all data is fetched.
         setIsLoading(false);
       }
     };
     fetchData();
-  }, []);
+  }, []); // The empty dependency array ensures this effect runs only once on mount.
 
+  // Helper function to check if a job has been completed.
   const isCompleted = (jobId) => completed.some(c => c.jobId === jobId);
 
+  // Handler to start a new job.
   const startJob = async (job) => {
     try {
       setStatusMessage(`INITIATING JOB ${job.jobId}...`);
       await axios.post('https://machine-iq-backend.vercel.app/api/jobs/start', job);
+      // Update the currentJobId state to the newly started job's ID.
       setCurrentJobId(job.jobId);
       setStatusMessage(`JOB ${job.jobId} ACTIVE | MACHINE: ${job.machineName}`);
     } catch (error) {
@@ -49,11 +65,14 @@ const OpenWorkloads = () => {
     }
   };
 
+  // Handler to stop the currently active job.
   const stopJob = async (jobId) => {
     try {
       setStatusMessage(`TERMINATING JOB ${jobId}...`);
       await axios.post('https://machine-iq-backend.vercel.app/api/jobs/stop', { jobId });
+      // Clear the currentJobId state, as no job is now active.
       setCurrentJobId(null);
+      // Re-fetch the list of completed jobs to update the UI.
       const completedRes = await axios.get('https://machine-iq-backend.vercel.app/api/jobs/completed');
       setCompleted(completedRes.data);
       setStatusMessage(`JOB ${jobId} ARCHIVED`);
@@ -63,6 +82,7 @@ const OpenWorkloads = () => {
     }
   };
 
+  // Filter the jobs to only show those that haven't been completed.
   const activeJobs = jobs.filter(job => !isCompleted(job.jobId));
 
   return (
@@ -111,6 +131,7 @@ const OpenWorkloads = () => {
               </div>
 
               <div style={styles.cardFooter}>
+                {/* Conditionally render the button based on whether this is the active job */}
                 {currentJobId === job.jobId ? (
                   <button 
                     style={{ ...styles.button, ...styles.stopButton }}
@@ -122,7 +143,8 @@ const OpenWorkloads = () => {
                   <button 
                     style={{ ...styles.button, ...styles.startButton }}
                     onClick={() => startJob(job)}
-                    disabled={currentJobId !== null} // Disable other start buttons
+                    // This is the key change: disable the button if any job is active.
+                    disabled={currentJobId !== null} 
                   >
                     INITIATE PROCESS
                   </button>
@@ -136,7 +158,7 @@ const OpenWorkloads = () => {
   );
 };
 
-// Cyberpunk styling
+// Cyberpunk styling (remains unchanged)
 const styles = {
   container: {
     background: 'linear-gradient(135deg, #111 0%, #1a1a2e 100%)',
