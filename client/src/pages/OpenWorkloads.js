@@ -11,12 +11,19 @@ const OpenWorkloads = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [jobsRes, completedRes] = await Promise.all([
+        const [jobsRes, completedRes, activeRes] = await Promise.all([
           axios.get('https://machine-iq-backend.vercel.app/api/jobcards'),
-          axios.get('https://machine-iq-backend.vercel.app/api/jobs/completed')
+          axios.get('https://machine-iq-backend.vercel.app/api/jobs/completed'),
+          axios.get('https://machine-iq-backend.vercel.app/api/jobs/active')
         ]);
+
         setJobs(jobsRes.data);
         setCompleted(completedRes.data);
+
+        if (activeRes.data) {
+          setCurrentJobId(activeRes.data.jobId);
+          setStatusMessage(`RESUMED ACTIVE JOB ${activeRes.data.jobId}`);
+        }
       } catch (error) {
         console.error("Error fetching data:", error);
         setStatusMessage('DATABASE CONNECTION FAILED');
